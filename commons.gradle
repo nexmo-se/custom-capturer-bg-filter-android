@@ -1,0 +1,26 @@
+import groovy.io.FileType
+
+/*
+Dependency versions
+*/
+ext {
+    extAgpVersion="4.2.1"
+    extCompileSdkVersion=34
+    extBuildToolsVersion="30.0.2"
+    extMinSdkVersion=24
+    extTargetSdkVersion=32
+    extVersionCode=1
+    extVersionName="1.0"
+    extMinifyEnabled=false
+    extOpentokSdkVersion="2.28.0"
+    extAppCompatVersion="1.4.1"
+    extEasyPermissionsVersion="3.0.0"
+    extConstraintLyoutVersion="2.0.4"
+    extArCoreVersion="1.33.0"
+    extSceneFormVersion="1.17.1"
+    extRetrofitVersion="2.9.0"
+    extOkHttpVersion="4.8.1"
+    extRetrofit2ConverterMoshi="2.9.0"
+    extOkHttpLoggingInterceptor="4.9.0"
+}
+
