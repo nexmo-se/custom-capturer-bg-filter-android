@@ -1,6 +1,9 @@
 package com.tokbox.sample.basicvideocapturercamera2
 
 import android.Manifest
+import android.content.res.Resources
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.util.Log
@@ -14,6 +17,7 @@ import com.opentok.android.OpentokError
 import com.opentok.android.Publisher
 import com.opentok.android.PublisherKit
 import com.opentok.android.PublisherKit.PublisherListener
+import com.opentok.android.PublisherKit.VideoTransformer
 import com.opentok.android.Session
 import com.opentok.android.Session.SessionListener
 import com.opentok.android.Stream
@@ -24,6 +28,10 @@ import com.tokbox.sample.basicvideocapturercamera2.OpenTokConfig.isValid
 import pub.devrel.easypermissions.AfterPermissionGranted
 import pub.devrel.easypermissions.EasyPermissions
 import pub.devrel.easypermissions.EasyPermissions.PermissionCallbacks
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+
 
 class MainActivity : AppCompatActivity(), PermissionCallbacks {
     private var session: Session? = null
@@ -32,7 +40,12 @@ class MainActivity : AppCompatActivity(), PermissionCallbacks {
     private var publisherViewContainer: RelativeLayout? = null
     private var subscriberViewContainer: LinearLayout? = null
     private var cycleCameraButton: Button? = null
+    private var bgNoneButton: Button? = null
+    private var bgBlurButton: Button? = null
+    private var bgVirtualButton: Button? = null
     private var videoCapturer:MirrorVideoCapturer? = null
+    private val videoTransformers = ArrayList<VideoTransformer>()
+
 
     private val publisherListener: PublisherListener = object : PublisherListener {
         override fun onStreamCreated(publisherKit: PublisherKit, stream: Stream) {
@@ -126,6 +139,9 @@ class MainActivity : AppCompatActivity(), PermissionCallbacks {
         publisherViewContainer = findViewById(R.id.publisherview)
         subscriberViewContainer = findViewById(R.id.subscriberview)
         cycleCameraButton = findViewById(R.id.cycleCamera)
+        bgNoneButton = findViewById(R.id.bgNone)
+        bgBlurButton = findViewById(R.id.bgBlur)
+        bgVirtualButton = findViewById(R.id.bgVirtual)
 
         videoCapturer = MirrorVideoCapturer(
             this@MainActivity, Publisher.CameraCaptureResolution.HIGH,
@@ -134,6 +150,68 @@ class MainActivity : AppCompatActivity(), PermissionCallbacks {
         cycleCameraButton!!.setOnClickListener {
             if (publisher != null) {
                 videoCapturer!!.cycleCamera()
+            }
+        }
+        bgNoneButton!!.setOnClickListener {
+            if(publisher !== null) {
+                // Clear video transformer
+                videoTransformers.clear();
+                publisher!!.setVideoTransformers(videoTransformers);
+
+                setBgActiveButton(bgNoneButton!!)
+
+
+            }
+        }
+        bgBlurButton!!.setOnClickListener {
+            if(publisher !== null) {
+                videoTransformers.clear();
+                val backgroundBlur = publisher!!.VideoTransformer(
+                    "BackgroundBlur",
+                    "{\"radius\":\"High\"}"
+                )
+                videoTransformers.add(backgroundBlur)
+                publisher!!.setVideoTransformers(videoTransformers)
+                setBgActiveButton(bgBlurButton!!)
+            }
+        }
+        bgVirtualButton!!.setOnClickListener {
+            if(publisher !== null) {
+                videoTransformers.clear();
+
+                val resourceName = try {
+                    this.resources.getResourceEntryName(R.drawable.background)  // Assuming "beach" is the name of the drawable resource
+                } catch (e: Resources.NotFoundException) {
+                    return@setOnClickListener  // Return if the resource ID is not found
+                }
+
+                val bitmap = BitmapFactory.decodeResource(
+                    resources,
+                    R.drawable.background
+                ) // Assuming "beach" is the name of the drawable resource
+
+                val imageFile = File(this.filesDir, "$resourceName.jpg")
+
+                try {
+                    FileOutputStream(imageFile).use { outputStream ->
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+                        outputStream.flush()
+                    }
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    return@setOnClickListener
+                }
+
+                val imagePath = imageFile.absolutePath
+
+                val backgroundReplacement: VideoTransformer = publisher!!.VideoTransformer(
+                    "BackgroundReplacement",
+                    "{\"image_file_path\":\"$imagePath\"}"
+                )
+
+                videoTransformers.add(backgroundReplacement)
+                publisher!!.setVideoTransformers(videoTransformers)
+                setBgActiveButton(bgVirtualButton!!)
             }
         }
 
@@ -192,6 +270,7 @@ class MainActivity : AppCompatActivity(), PermissionCallbacks {
             Manifest.permission.RECORD_AUDIO
         )
         if (EasyPermissions.hasPermissions(this, *perms)) {
+            Log.d(TAG, "session config ${OpenTokConfig.API_KEY}")
             session = Session.Builder(this, OpenTokConfig.API_KEY, OpenTokConfig.SESSION_ID).build()
             session!!.setSessionListener(sessionListener)
             session!!.connect(OpenTokConfig.TOKEN)
@@ -228,6 +307,15 @@ class MainActivity : AppCompatActivity(), PermissionCallbacks {
         session!!.disconnect()
     }
 
+    private fun setBgActiveButton(activeButton: Button) {
+        // Clear all button
+        bgNoneButton!!.setBackgroundResource(R.color.colorInactive)
+        bgBlurButton!!.setBackgroundResource(R.color.colorInactive)
+        bgVirtualButton!!.setBackgroundResource(R.color.colorInactive)
+
+        // set active button
+        activeButton.setBackgroundResource(R.color.colorActive)
+    }
     private fun finishWithMessage(message: String) {
         Log.e(TAG, message)
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
