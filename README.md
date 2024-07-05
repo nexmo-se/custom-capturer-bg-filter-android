@@ -4,6 +4,9 @@ The sample application demonstrates how to utilize the device camera as a video 
 
 Additionally, this sample showcases the application of background blur and background replacement using the setVideoTransformers method of the publisher.
 
+## Set up credentials
+You will need a valid TokBox account for most of the sample projects. OpenTok credentials (API_KEY, SESSION_ID, TOKEN) are stored inside OpenTokConfig class. For these sample applications, credentials can be retrieved from the Dashboard and hardcoded in the application, however for a production environment server should provide these credentials (check Basic-Video-Chat project).
+
 
 ## Cycle the first available front or back camera
 Retrieve the first available front or back camera ID by excluding IDs with the same LENS_FACING characteristic as the current camera ID.
