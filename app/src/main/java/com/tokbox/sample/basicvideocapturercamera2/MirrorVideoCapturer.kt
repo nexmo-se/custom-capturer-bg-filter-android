@@ -439,6 +439,7 @@ class MirrorVideoCapturer(
         captureSettings.height = if (null != cameraFrame) cameraFrame!!.height else 0
         captureSettings.format = NV21
         captureSettings.expectedDelay = 0
+        captureSettings.mirrorInLocalRender = isFrontCamera;
         return captureSettings
     }
 
